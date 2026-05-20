@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1025"/>
+      <stop offset="100%" stop-color="#06060B"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="50%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+    <filter id="blur1">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#bg)"/>
+  <!-- Glow backdrop -->
+  <circle cx="96" cy="88" r="38" fill="url(#glow)" opacity="0.12" filter="url(#blur1)"/>
+  <!-- Brain outline -->
+  <g fill="none" stroke="url(#glow)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left hemisphere -->
+    <path d="M72 100c-14-2-24-14-24-28 0-16 12-28 28-28 4 0 8 1 11 2"/>
+    <path d="M60 102c-10 2-18-4-18-14s6-16 14-18"/>
+    <path d="M68 112c-8 0-16-6-16-14 0-6 4-12 10-14"/>
+    <!-- Right hemisphere -->
+    <path d="M120 100c14-2 24-14 24-28 0-16-12-28-28-28-4 0-8 1-11 2"/>
+    <path d="M132 102c10 2 18-4 18-14s-6-16-14-18"/>
+    <path d="M124 112c8 0 16-6 16-14 0-6-4-12-10-14"/>
+    <!-- Center line -->
+    <path d="M96 44v72"/>
+    <!-- Neural connections -->
+    <circle cx="96" cy="66" r="4" fill="url(#glow)" stroke="none"/>
+    <circle cx="82" cy="82" r="3" fill="#8B5CF6" stroke="none"/>
+    <circle cx="110" cy="82" r="3" fill="#EC4899" stroke="none"/>
+    <circle cx="96" cy="98" r="3.5" fill="#06B6D4" stroke="none"/>
+    <!-- Connection lines -->
+    <line x1="96" y1="66" x2="82" y2="82" stroke-width="1.5" opacity="0.5"/>
+    <line x1="96" y1="66" x2="110" y2="82" stroke-width="1.5" opacity="0.5"/>
+    <line x1="82" y1="82" x2="96" y2="98" stroke-width="1.5" opacity="0.5"/>
+    <line x1="110" y1="82" x2="96" y2="98" stroke-width="1.5" opacity="0.5"/>
+  </g>
+  <!-- Pulse wave at bottom -->
+  <polyline points="40,144 60,144 70,132 80,156 90,138 100,150 110,144 152,144"
+    fill="none" stroke="url(#glow)" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+  <!-- Small dots for "AI nodes" -->
+  <circle cx="48" cy="60" r="2" fill="#8B5CF6" opacity="0.4"/>
+  <circle cx="144" cy="60" r="2" fill="#EC4899" opacity="0.4"/>
+  <circle cx="56" cy="120" r="1.5" fill="#06B6D4" opacity="0.3"/>
+  <circle cx="136" cy="120" r="1.5" fill="#10B981" opacity="0.3"/>
+</svg>

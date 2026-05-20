@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06060B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<title>KASAI Brain — AI Agent System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  --bg:#06060B;--surface:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.06);
+  --text:#E2E8F0;--dim:rgba(255,255,255,0.35);--dim2:rgba(255,255,255,0.15);
+  --purple:#8B5CF6;--pink:#EC4899;--cyan:#06B6D4;--green:#10B981;
+  --orange:#F97316;--red:#EF4444;--yellow:#EAB308;--blue:#3B82F6;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sans-serif;
+  min-height:100vh;min-height:100dvh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+
+/* Nav */
+#nav{position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(6,6,11,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);padding:6px 0 calc(6px + var(--safe-b));
+  display:flex;justify-content:space-around;align-items:center}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:none;border:none;color:var(--dim);font-size:10px;font-family:inherit;
+  padding:6px 12px;cursor:pointer;transition:all .2s;font-weight:500;letter-spacing:.5px}
+.nav-btn.active{color:var(--purple)}
+.nav-btn .ico{font-size:20px;line-height:1}
+.nav-btn:active{transform:scale(.92)}
+
+/* Screens */
+.screen{display:none;padding:20px 16px calc(80px + var(--safe-b));min-height:100vh;min-height:100dvh}
+.screen.active{display:block}
+
+/* Common */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;
+  transition:all .3s ease}
+.card:hover{border-color:rgba(255,255,255,0.1)}
+.section-label{font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;
+  color:var(--dim);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.section-label .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.page-title{font-size:28px;font-weight:800;margin-bottom:4px;
+  background:linear-gradient(135deg,#fff,rgba(255,255,255,.6));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.page-sub{color:var(--dim);font-size:13px;font-weight:300;margin-bottom:28px;letter-spacing:.5px}
+.badge{display:inline-block;padding:4px 12px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:1px}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* ===== SCREEN: DASHBOARD ===== */
+.brain-visual{display:flex;flex-direction:column;align-items:center;margin:20px 0 30px;position:relative}
+.brain-orb{width:130px;height:130px;border-radius:50%;
+  background:radial-gradient(circle,rgba(139,92,246,.18),rgba(139,92,246,.02) 70%);
+  border:2px solid rgba(139,92,246,.25);display:flex;align-items:center;justify-content:center;
+  flex-direction:column;animation:pulse-orb 4s ease-in-out infinite;position:relative;z-index:2}
+@keyframes pulse-orb{0%,100%{box-shadow:0 0 30px rgba(139,92,246,.08)}50%{box-shadow:0 0 60px rgba(139,92,246,.15)}}
+.brain-orb .ico{font-size:36px}
+.brain-orb .lbl{font-size:9px;font-weight:700;letter-spacing:3px;color:var(--purple);margin-top:4px}
+
+.agents-ring{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;margin-top:24px}
+.agent-mini{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:16px 12px;text-align:center;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.agent-mini::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 16px 16px}
+.agent-mini:active{transform:scale(.95)}
+.agent-mini .a-ico{font-size:26px;margin-bottom:6px}
+.agent-mini .a-name{font-size:10px;font-weight:700;letter-spacing:1px}
+.agent-mini .a-count{font-size:9px;color:var(--dim);margin-top:2px}
+
+.agent-mini[data-agent=training]::after{background:var(--orange)}
+.agent-mini[data-agent=training] .a-name{color:var(--orange)}
+.agent-mini[data-agent=nutrition]::after{background:var(--green)}
+.agent-mini[data-agent=nutrition] .a-name{color:var(--green)}
+.agent-mini[data-agent=running]::after{background:var(--cyan)}
+.agent-mini[data-agent=running] .a-name{color:var(--cyan)}
+.agent-mini[data-agent=habits]::after{background:var(--pink)}
+.agent-mini[data-agent=habits] .a-name{color:var(--pink)}
+.agent-mini[data-agent=analytics]::after{background:var(--purple)}
+.agent-mini[data-agent=analytics] .a-name{color:var(--purple)}
+.agent-mini[data-agent=proactive]::after{background:var(--yellow)}
+.agent-mini[data-agent=proactive] .a-name{color:var(--yellow)}
+
+/* Status cards */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:16px 12px;text-align:center}
+.stat-card .sv{font-size:22px;font-weight:800}
+.stat-card .sl{font-size:9px;color:var(--dim);letter-spacing:2px;margin-top:4px;text-transform:uppercase}
+
+/* ===== SCREEN: AGENTS ===== */
+.agent-full{background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  margin-bottom:16px;overflow:hidden;cursor:pointer;transition:all .3s}
+.agent-full:active{transform:scale(.98)}
+.agent-header{padding:20px;display:flex;align-items:center;gap:14px}
+.agent-header .ah-ico{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;
+  justify-content:center;font-size:24px;flex-shrink:0}
+.agent-header .ah-info{flex:1}
+.agent-header .ah-name{font-size:15px;font-weight:700}
+.agent-header .ah-role{font-size:11px;color:var(--dim)}
+.agent-header .ah-arrow{color:var(--dim);font-size:18px;transition:transform .3s}
+.agent-full.open .ah-arrow{transform:rotate(90deg)}
+.agent-skills{display:none;padding:0 20px 20px;border-top:1px solid var(--border)}
+.agent-full.open .agent-skills{display:block}
+.skill-item{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.03);
+  display:flex;align-items:flex-start;gap:10px}
+.skill-item:last-child{border:none}
+.skill-item .si-check{width:20px;height:20px;border-radius:6px;display:flex;align-items:center;
+  justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px}
+.skill-item .si-name{font-size:12px;font-weight:600}
+.skill-item .si-desc{font-size:10px;color:var(--dim);margin-top:2px;line-height:1.5}
+.skill-item .si-badge{font-size:8px;padding:2px 6px;border-radius:4px;margin-top:4px;display:inline-block}
+
+/* ===== SCREEN: CHAT ===== */
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - 130px);height:calc(100dvh - 130px)}
+.chat-messages{flex:1;overflow-y:auto;padding:10px 0;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:88%;padding:14px 18px;border-radius:18px;font-size:13px;line-height:1.65;word-wrap:break-word}
+.msg-user{background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.2);
+  align-self:flex-end;border-bottom-right-radius:4px}
+.msg-ai{background:var(--surface);border:1px solid var(--border);
+  align-self:flex-start;border-bottom-left-radius:4px}
+.msg-ai .agent-tag{display:inline-block;padding:3px 8px;border-radius:6px;
+  font-size:9px;font-weight:600;letter-spacing:.5px;margin-bottom:8px}
+.msg-ai .route-info{font-size:9px;color:var(--dim);margin-top:8px;font-style:italic}
+.msg-typing{align-self:flex-start;padding:14px 20px}
+.msg-typing .dots{display:flex;gap:4px}
+.msg-typing .dots span{width:7px;height:7px;border-radius:50%;background:var(--dim);animation:blink 1.4s infinite}
+.msg-typing .dots span:nth-child(2){animation-delay:.2s}
+.msg-typing .dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.action-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.action-chip{padding:6px 12px;border-radius:10px;font-size:10px;font-weight:600;
+  border:1px solid rgba(139,92,246,.3);background:rgba(139,92,246,.08);
+  color:var(--purple);cursor:pointer;transition:all .2s}
+.action-chip:active{transform:scale(.95);background:rgba(139,92,246,.2)}
+.chat-input-bar{display:flex;gap:8px;padding:12px 0;align-items:center}
+.chat-input-bar input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);
+  border-radius:14px;padding:12px 18px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none}
+.chat-input-bar input:focus{border-color:rgba(139,92,246,.4)}
+.chat-input-bar input::placeholder{color:var(--dim)}
+.chat-send{width:44px;height:44px;border-radius:14px;background:var(--purple);border:none;
+  color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-send:active{transform:scale(.9)}
+.quick-btns{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0}
+.quick-btn{padding:7px 14px;border-radius:12px;font-size:11px;font-weight:500;
+  background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;transition:all .2s}
+.quick-btn:active{transform:scale(.95);background:rgba(255,255,255,.06)}
+
+/* ===== SCREEN: FLOW ===== */
+.flow-step-v{display:flex;align-items:flex-start;gap:16px;margin-bottom:0;position:relative}
+.flow-line{position:absolute;left:23px;top:48px;bottom:-16px;width:2px;border-radius:1px}
+.flow-step-v:last-child .flow-line{display:none}
+.flow-dot{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;
+  justify-content:center;font-size:22px;flex-shrink:0;position:relative;z-index:1}
+.flow-content{flex:1;padding-bottom:28px}
+.flow-content .fc-num{font-size:9px;font-weight:700;letter-spacing:3px;color:var(--dim);margin-bottom:4px}
+.flow-content .fc-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.flow-content .fc-desc{font-size:11px;color:var(--dim);line-height:1.6}
+.flow-anim{animation:flow-in .6s ease both}
+@keyframes flow-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.flow-step-v:nth-child(1) .flow-anim{animation-delay:0s}
+.flow-step-v:nth-child(2) .flow-anim{animation-delay:.15s}
+.flow-step-v:nth-child(3) .flow-anim{animation-delay:.3s}
+.flow-step-v:nth-child(4) .flow-anim{animation-delay:.45s}
+.flow-step-v:nth-child(5) .flow-anim{animation-delay:.6s}
+
+/* ===== SCREEN: TECH ===== */
+.tech-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:20px;margin-bottom:12px;display:flex;align-items:center;gap:16px}
+.tech-card .tc-ico{font-size:28px;width:48px;text-align:center;flex-shrink:0}
+.tech-card .tc-name{font-size:13px;font-weight:700}
+.tech-card .tc-desc{font-size:10px;color:var(--dim);margin-top:2px;line-height:1.5}
+.tech-card .tc-badge{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:8px;
+  font-size:9px;font-weight:600;background:rgba(16,185,129,.1);color:var(--green);letter-spacing:1px}
+.cost-hero{text-align:center;padding:32px 20px;background:linear-gradient(135deg,rgba(16,185,129,.06),rgba(6,182,212,.06));
+  border:1px solid rgba(16,185,129,.15);border-radius:24px;margin:20px 0}
+.cost-hero .ch-price{font-size:52px;font-weight:800;color:var(--green)}
+.cost-hero .ch-sub{font-size:13px;color:var(--dim);margin-top:4px}
+
+/* Responsive */
+@media(min-width:600px){
+  .screen{max-width:480px;margin:0 auto}
+  #nav{max-width:480px;left:50%;transform:translateX(-50%);border-radius:20px 20px 0 0}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<nav id="nav">
+  <button class="nav-btn active" data-screen="dashboard"><span class="ico">🧠</span>Dashboard</button>
+  <button class="nav-btn" data-screen="agents"><span class="ico">🤖</span>Agents</button>
+  <button class="nav-btn" data-screen="chat"><span class="ico">💬</span>Chat</button>
+  <button class="nav-btn" data-screen="flow"><span class="ico">⚡</span>Flow</button>
+  <button class="nav-btn" data-screen="tech"><span class="ico">⚙️</span>Tech</button>
+</nav>
+
+<!-- ===== DASHBOARD ===== -->
+<div class="screen active" id="screen-dashboard">
+  <div class="page-title">KASAI Brain</div>
+  <div class="page-sub">AI Agent System — Health & Fitness</div>
+
+  <div class="brain-visual">
+    <div class="brain-orb">
+      <div class="ico">🧠</div>
+      <div class="lbl">BRAIN</div>
+    </div>
+  </div>
+
+  <div class="agents-ring" id="agents-ring"></div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="sv" style="color:var(--purple)">6</div><div class="sl">Agents</div></div>
+    <div class="stat-card"><div class="sv" style="color:var(--pink)">43</div><div class="sl">Skills</div></div>
+    <div class="stat-card"><div class="sv" style="color:var(--green)">$0</div><div class="sl">Kosten</div></div>
+  </div>
+
+  <div class="section-label"><div class="dot" style="background:var(--cyan)"></div>LIVE STATUS</div>
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 2s infinite"></div>
+      <span style="font-size:12px;font-weight:600">System Online</span>
+      <span style="font-size:10px;color:var(--dim);margin-left:auto" class="mono" id="live-time">--:--:--</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="live-badges"></div>
+  </div>
+
+  <div class="section-label"><div class="dot" style="background:var(--orange)"></div>LETZTE AKTIVITÄT</div>
+  <div id="activity-feed"></div>
+</div>
+
+<!-- ===== AGENTS ===== -->
+<div class="screen" id="screen-agents">
+  <div class="page-title">Agents</div>
+  <div class="page-sub">6 spezialisierte Agents mit 43 Skills</div>
+  <div id="agents-list"></div>
+</div>
+
+<!-- ===== CHAT ===== -->
+<div class="screen" id="screen-chat">
+  <div class="page-title">Live Chat</div>
+  <div class="page-sub">Teste das Agent-Routing in Echtzeit</div>
+  <div class="chat-container">
+    <div class="quick-btns">
+      <button class="quick-btn" data-q="Was soll ich heute trainieren?">💪 Workout</button>
+      <button class="quick-btn" data-q="Ich hatte Haferflocken mit Banane zum Frühstück">🥗 Meal Log</button>
+      <button class="quick-btn" data-q="Wie war meine Woche?">📊 Report</button>
+      <button class="quick-btn" data-q="Wie viel Protein brauche ich?">🥩 Protein</button>
+      <button class="quick-btn" data-q="Welchen Lauf soll ich heute machen?">🏃 Run</button>
+      <button class="quick-btn" data-q="Gib mir mein Morgen-Briefing">☀️ Briefing</button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-bar">
+      <input type="text" id="chat-input" placeholder="Nachricht an KASAI Brain..." autocomplete="off">
+      <button class="chat-send" id="chat-send">↑</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FLOW ===== -->
+<div class="screen" id="screen-flow">
+  <div class="page-title">Request Flow</div>
+  <div class="page-sub">So verarbeitet KASAI Brain deine Anfragen</div>
+  <div id="flow-steps"></div>
+
+  <div style="margin-top:32px">
+    <div class="section-label"><div class="dot" style="background:var(--pink)"></div>WRITE FLOW</div>
+    <div class="card">
+      <div style="font-size:12px;line-height:1.8;color:var(--dim)">
+        <span style="color:var(--text);font-weight:600">AI schreibt NIE direkt.</span> Stattdessen:<br><br>
+        1. AI antwortet mit Action-Vorschlag<br>
+        2. User sieht Bestätigungs-Chips<br>
+        3. User bestätigt → App führt aus<br>
+        4. Bestehende Sync-Pipeline → Supabase<br><br>
+        <span style="color:var(--green)">✓</span> Volle User-Kontrolle<br>
+        <span style="color:var(--green)">✓</span> Kein Risiko falscher Daten
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TECH ===== -->
+<div class="screen" id="screen-tech">
+  <div class="page-title">Tech Stack</div>
+  <div class="page-sub">100% kostenlose Infrastruktur</div>
+
+  <div class="cost-hero">
+    <div class="ch-price">$0</div>
+    <div class="ch-sub">Monatliche AI-Infrastruktur Kosten</div>
+  </div>
+
+  <div class="section-label"><div class="dot" style="background:var(--green)"></div>STACK</div>
+  <div id="tech-list"></div>
+
+  <div style="margin-top:24px">
+    <div class="section-label"><div class="dot" style="background:var(--purple)"></div>PROVIDER FALLBACK</div>
+    <div class="card">
+      <div style="font-size:12px;line-height:2;color:var(--dim)" class="mono">
+        <span style="color:var(--green)">1.</span> Groq (Llama 3.1 70B/8B) <span style="color:var(--green)">← primary</span><br>
+        <span style="color:var(--yellow)">2.</span> Cloudflare Workers AI <span style="color:var(--yellow)">← fallback</span><br>
+        <span style="color:var(--dim)">3.</span> Ollama (self-hosted) <span style="color:var(--dim)">← optional</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px">
+    <div class="section-label"><div class="dot" style="background:var(--cyan)"></div>EDGE FUNCTIONS</div>
+    <div class="card" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:2;color:var(--dim)">
+      <span style="color:var(--purple)">POST</span> /ai-chat <span style="color:var(--dim2)">— Haupt-Chat</span><br>
+      <span style="color:var(--green)">GET</span>&nbsp; /ai-briefing <span style="color:var(--dim2)">— Morning Card</span><br>
+      <span style="color:var(--purple)">POST</span> /ai-suggest <span style="color:var(--dim2)">— Inline NLP</span><br>
+      <span style="color:var(--purple)">POST</span> /ai-proactive <span style="color:var(--dim2)">— Cron Tasks</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const AGENTS = [
+  { id:'training', name:'Training', ico:'💪', color:'var(--orange)', role:'Workout & Progression',
+    skills:[
+      {id:'workout-advisor',name:'Workout Advisor',desc:'Empfiehlt heutiges Workout basierend auf Plan + Readiness',p:'MUST'},
+      {id:'set-recommender',name:'Set Recommender',desc:'Empfiehlt Gewicht/Reps/RIR pro Satz',p:'MUST'},
+      {id:'progressive-overload',name:'Progressive Overload',desc:'Berechnet wann Gewicht gesteigert werden soll (Epley 1RM)',p:'MUST'},
+      {id:'volume-analyzer',name:'Volume Analyzer',desc:'Wöchentliches Trainingsvolumen pro Muskelgruppe',p:'MUST'},
+      {id:'plan-generator',name:'Plan Generator',desc:'Generiert komplette Trainingspläne (PPL/UL/FB)',p:'MUST'},
+      {id:'training-summary',name:'Training Summary',desc:'Zusammenfassung nach abgeschlossenem Workout',p:'MUST'},
+      {id:'exercise-substitution',name:'Exercise Substitution',desc:'Alternative Übungen bei Verletzung/Equipment-Mangel',p:'NICE'},
+      {id:'deload-detector',name:'Deload Detector',desc:'Erkennt Übertraining, empfiehlt Deload-Wochen',p:'NICE'},
+      {id:'form-tips',name:'Form Tips',desc:'Übungsspezifische Technik-Cues',p:'NICE'},
+      {id:'warmup-generator',name:'Warmup Generator',desc:'Erstellt Warm-up für heutige Muskelgruppen',p:'NICE'},
+      {id:'pr-celebration',name:'PR Celebration',desc:'Personalisierte Feier bei neuem Personal Record',p:'NICE'},
+      {id:'rest-day-activity',name:'Rest Day Activity',desc:'Active Recovery Vorschläge an Ruhetagen',p:'NICE'},
+    ]},
+  { id:'nutrition', name:'Nutrition', ico:'🥗', color:'var(--green)', role:'Ernährung & Makros',
+    skills:[
+      {id:'meal-logger-nlp',name:'Meal Logger NLP',desc:'Natürliche Sprache → strukturierte Mahlzeit-Daten',p:'MUST'},
+      {id:'calorie-advisor',name:'Calorie Advisor',desc:'Verbleibende Kalorien/Makros für heute',p:'MUST'},
+      {id:'protein-tracker',name:'Protein Tracker',desc:'Detaillierte Protein-Intake Analyse',p:'MUST'},
+      {id:'food-database',name:'Food Database',desc:'Nährwerte für Lebensmittel schätzen',p:'MUST'},
+      {id:'hydration-coach',name:'Hydration Coach',desc:'Smarte Wasser-Erinnerungen & Tipps',p:'MUST'},
+      {id:'meal-plan-generator',name:'Meal Plan Generator',desc:'Tages-Meal-Plan für Makro-Ziele',p:'NICE'},
+      {id:'nutrition-weekly-report',name:'Nutrition Weekly',desc:'Wöchentliche Ernährungs-Zusammenfassung',p:'NICE'},
+      {id:'cheat-meal-budget',name:'Cheat Meal Budget',desc:'Berechnet wie Cheat-Meal ins Budget passt',p:'NICE'},
+    ]},
+  { id:'running', name:'Running', ico:'🏃', color:'var(--cyan)', role:'Laufen & Pace',
+    skills:[
+      {id:'run-analyzer',name:'Run Analyzer',desc:'Pace/Distanz Trends über Zeit analysieren',p:'MUST'},
+      {id:'pace-calculator',name:'Pace Calculator',desc:'Ziel-Pace und Race-Zeiten (Riegel-Formel)',p:'MUST'},
+      {id:'run-type-advisor',name:'Run Type Advisor',desc:'Empfiehlt optimalen Lauf-Typ für heute',p:'MUST'},
+      {id:'run-plan-generator',name:'Run Plan Generator',desc:'Laufpläne für 5K/10K/Halbmarathon/Marathon',p:'NICE'},
+      {id:'run-summary',name:'Run Summary',desc:'Lauf-Zusammenfassung in Textform',p:'NICE'},
+      {id:'run-recovery',name:'Run Recovery',desc:'Recovery-Zeit Schätzung nach Lauf',p:'NICE'},
+    ]},
+  { id:'habits', name:'Habits', ico:'🎯', color:'var(--pink)', role:'Gewohnheiten & Lifestyle',
+    skills:[
+      {id:'habit-coach',name:'Habit Coach',desc:'Streak-Analyse, Ermutigung, Dranbleib-Tipps',p:'MUST'},
+      {id:'daily-checklist',name:'Daily Checklist',desc:'Kombinierte Tages-Checklist über alle Domains',p:'MUST'},
+      {id:'habit-suggestion',name:'Habit Suggestion',desc:'Neue Habits basierend auf Zielen vorschlagen',p:'NICE'},
+      {id:'streak-recovery',name:'Streak Recovery',desc:'Hilfe nach gebrochenem Streak',p:'NICE'},
+      {id:'sleep-advisor',name:'Sleep Advisor',desc:'Schlaf-Tipps basierend auf Readiness-Daten',p:'NICE'},
+      {id:'step-coach',name:'Step Coach',desc:'Schrittziel-Fortschritt und Ermutigung',p:'NICE'},
+    ]},
+  { id:'analytics', name:'Analytics', ico:'📊', color:'var(--purple)', role:'Daten & Insights',
+    skills:[
+      {id:'weekly-report',name:'Weekly Report',desc:'Cross-Domain Wochen-Report mit Stats',p:'MUST'},
+      {id:'goal-tracker',name:'Goal Tracker',desc:'Fortschritt zu User-definierten Zielen',p:'MUST'},
+      {id:'monthly-report',name:'Monthly Report',desc:'Monats-Zusammenfassung mit Langzeit-Trends',p:'NICE'},
+      {id:'readiness-trend',name:'Readiness Trend',desc:'Readiness-Score Muster analysieren',p:'NICE'},
+      {id:'consistency-score',name:'Consistency Score',desc:'Gesamt-Konsistenz-Score 0-100',p:'NICE'},
+      {id:'comparison-periods',name:'Period Comparison',desc:'Diese Woche vs. letzte Woche',p:'NICE'},
+    ]},
+  { id:'proactive', name:'Proaktiv', ico:'⚡', color:'var(--yellow)', role:'Automation & Alerts',
+    skills:[
+      {id:'morning-briefing',name:'Morning Briefing',desc:'Auto-generiertes Morgen-Briefing',p:'MUST'},
+      {id:'smart-reminder',name:'Smart Reminder',desc:'Kontextuelle Erinnerungen (Mahlzeit, Wasser, Habits)',p:'MUST'},
+      {id:'end-of-day-summary',name:'End of Day',desc:'Abend-Zusammenfassung des Tages',p:'NICE'},
+      {id:'motivational-quote-context',name:'Motivational Quote',desc:'Kontext-bewusste Motivations-Messages',p:'NICE'},
+      {id:'auto-adjust-goals',name:'Auto Adjust Goals',desc:'Ziel-Anpassungen basierend auf 30+ Tagen Daten',p:'NICE'},
+    ]},
+];
+
+const FLOW_STEPS = [
+  {ico:'👤',color:'var(--text)',title:'User Input',desc:'Nachricht, Dateneingabe oder automatischer Trigger vom System',num:'01'},
+  {ico:'🧠',color:'var(--purple)',title:'Brain Router',desc:'Tier-1 Keyword-Match (<1ms) oder Tier-2 LLM-Klassifikation. Bestimmt Agent + Skill.',num:'02'},
+  {ico:'📦',color:'var(--cyan)',title:'Context Assembly',desc:'Lädt User-Profil, relevante Daten (nur nötiger Zeitraum), Memory-Facts und Conversation-History.',num:'03'},
+  {ico:'🤖',color:'var(--orange)',title:'Agent Execution',desc:'Spezialisierter Agent verarbeitet mit System-Prompt + Context. LLM Call über Groq/CF/Ollama.',num:'04'},
+  {ico:'✨',color:'var(--green)',title:'Response',desc:'Formatierte Antwort mit optionalen Action-Chips. Memory-Extraction läuft im Hintergrund.',num:'05'},
+];
+
+const TECH_STACK = [
+  {ico:'⚡',name:'Supabase Edge Functions',desc:'API Layer (Deno Runtime, 500K/Monat free)',badge:'FREE'},
+  {ico:'🦙',name:'Groq + Llama 3.1',desc:'Primärer LLM Provider, 14.400 req/Tag free',badge:'FREE'},
+  {ico:'☁️',name:'Cloudflare Workers AI',desc:'Fallback LLM, 10.000 neurons/Tag free',badge:'FREE'},
+  {ico:'🗄️',name:'Supabase PostgreSQL',desc:'Bestehende DB + 4 neue AI-Tabellen',badge:'FREE'},
+  {ico:'🔐',name:'Supabase Auth + RLS',desc:'JWT Auth, Row Level Security auf allen Tabellen',badge:'FREE'},
+  {ico:'⏰',name:'pg_cron',desc:'Cron-Jobs für Morning Briefing & Reminders',badge:'FREE'},
+  {ico:'📱',name:'PWA + Service Worker',desc:'Offline-fähig, installierbar, Push Notifications',badge:'FREE'},
+];
+
+// ===== CHAT SIMULATION =====
+const CHAT_RESPONSES = {
+  training: [
+    {tag:'💪 TRAINING AGENT',tagBg:'rgba(249,115,22,.12)',tagColor:'var(--orange)',
+     text:'Basierend auf deinem PPL-Plan ist heute **Push Day** dran!\n\n🏋️ **Empfohlenes Workout:**\n• Bankdrücken: 4×8 @ 80kg (RIR 2)\n• Schrägbank KH: 3×10 @ 28kg\n• Seitheben: 4×15 @ 12kg\n• Trizeps Dips: 3×12\n• Cable Flys: 3×15\n\nDeine Readiness ist bei 7/10 — guter Tag für Progression! Versuch beim Bankdrücken 82.5kg wenn der erste Satz sauber läuft. 💪'},
+  ],
+  nutrition: [
+    {tag:'🥗 NUTRITION AGENT',tagBg:'rgba(16,185,129,.12)',tagColor:'var(--green)',
+     text:'Hab ich geloggt! 📝\n\n**Haferflocken mit Banane**\n• Kalorien: ~380 kcal\n• Protein: 12g\n• Carbs: 68g\n• Fett: 8g\n\n📊 **Tages-Status:**\nVerbraucht: 380 / 2.600 kcal\nProtein: 12g / 156g Ziel\n\nDu hast noch **2.220 kcal** und brauchst noch **144g Protein** — achte beim Mittag auf eine proteinreiche Mahlzeit! 🥩',
+     actions:[{label:'✅ Mahlzeit loggen',type:'confirm'},{label:'✏️ Anpassen',type:'edit'}]},
+  ],
+  running: [
+    {tag:'🏃 RUNNING AGENT',tagBg:'rgba(6,182,212,.12)',tagColor:'var(--cyan)',
+     text:'Heute empfehle ich einen **Easy Run** 🏃‍♂️\n\nDeine letzten 3 Läufe waren 2× Easy und 1× Tempo. Nach der 80/20 Regel passt heute:\n\n• **Distanz:** 5-6 km\n• **Pace:** 5:30-6:00 min/km\n• **Dauer:** ~30 min\n• **Puls:** Zone 2 (max 145 bpm)\n\nGeh es ruhig an — morgen steht Intervalltraining an! 🔥'},
+  ],
+  habits: [
+    {tag:'🎯 HABITS AGENT',tagBg:'rgba(236,72,153,.12)',tagColor:'var(--pink)',
+     text:'☀️ **Dein Tages-Check:**\n\n✅ Training: Push Day (geplant)\n☐ Ernährung: 380/2600 kcal\n☐ Wasser: 0/3000 ml — Fang an! 💧\n☐ Habits: 0/4 erledigt\n☐ Schritte: 1.200/10.000\n\n🔥 Dein Streak: **12 Tage** — nicht aufhören!\n\nPrio jetzt: Erstmal 500ml Wasser trinken, dann Mittag planen. Du schaffst das! 💪'},
+  ],
+  analytics: [
+    {tag:'📊 ANALYTICS AGENT',tagBg:'rgba(139,92,246,.12)',tagColor:'var(--purple)',
+     text:'📊 **WOCHEN-REPORT (KW 21)**\n━━━━━━━━━━━━━━━━━━\n\n🏋️ **Training:** 4/5 Sessions ✓\nVolumen: +8% vs. letzte Woche\nNeuer PR: Bankdrücken 85kg×6\n\n🥗 **Ernährung:** Ø 2.480 kcal/Tag\nProtein: Ø 148g (Ziel: 156g) ⚠️\n\n🏃 **Running:** 3 Läufe, 16.2 km\nØ Pace: 5:42 min/km (+3% besser)\n\n✅ **Habits:** 85% Compliance\n💧 **Wasser:** Ø 2.400ml (Ziel: 3000) ⚠️\n\n📈 **Consistency Score: 78/100**\nFokus nächste Woche: Protein & Wasser erhöhen!'},
+  ],
+  proactive: [
+    {tag:'⚡ PROACTIVE AGENT',tagBg:'rgba(234,179,8,.12)',tagColor:'var(--yellow)',
+     text:'☀️ **Guten Morgen!**\n\n🏋️ **Training:** Pull Day steht an\n→ Fokus: Kreuzheben, Rudern, Bizeps\n\n🥗 **Ernährung:** 2.600 kcal Ziel\n→ Tipp: Starte mit einem proteinreichen Frühstück (40g+)\n\n✅ **Habits:** Mobility, Lesen, Meditation\n💧 **Wasser:** 3L Ziel — stell dir eine Flasche bereit!\n\n💪 **Fun Fact:** Dein Streak ist bei 12 Tagen — das längste seit du KASAI nutzt! Weiter so! 🔥'},
+  ],
+};
+
+// Simple keyword router (mirrors the real Tier-1)
+function routeMessage(msg) {
+  const m = msg.toLowerCase();
+  if (/workout|training|trainier|übung|plan|push|pull|leg|satz|gewicht|set/.test(m)) return 'training';
+  if (/gegessen|essen|meal|kalorien|kcal|protein|makro|frühstück|mittag|abend|haferflocken|ernäh/.test(m)) return 'nutrition';
+  if (/lauf|run|pace|km|joggen|marathon|tempo|intervall/.test(m)) return 'running';
+  if (/habit|streak|gewohnheit|checklist|schlaf|schritt|tages/.test(m)) return 'habits';
+  if (/woche|report|statistik|analyse|trend|fortschritt|score|vergleich/.test(m)) return 'analytics';
+  if (/morgen|briefing|remind|motivation|guten morgen/.test(m)) return 'proactive';
+  return 'training';
+}
+
+// ===== RENDER FUNCTIONS =====
+function renderDashboard() {
+  const ring = document.getElementById('agents-ring');
+  ring.innerHTML = AGENTS.map(a => `
+    <div class="agent-mini" data-agent="${a.id}" onclick="showAgent('${a.id}')">
+      <div class="a-ico">${a.ico}</div>
+      <div class="a-name">${a.name}</div>
+      <div class="a-count">${a.skills.length} Skills</div>
+    </div>`).join('');
+
+  // Live badges
+  const badges = document.getElementById('live-badges');
+  badges.innerHTML = AGENTS.map(a =>
+    `<span class="badge" style="background:${a.color.replace('var(','rgba(').replace(')','')}22);color:${a.color}">${a.ico} ${a.name}</span>`
+  ).join('');
+
+  // Activity feed
+  const feed = document.getElementById('activity-feed');
+  const activities = [
+    {ico:'💪',text:'Training Agent: Workout für heute empfohlen',time:'vor 2 min',color:'var(--orange)'},
+    {ico:'🥗',text:'Nutrition Agent: Frühstück geloggt (380 kcal)',time:'vor 8 min',color:'var(--green)'},
+    {ico:'📊',text:'Analytics Agent: Wochen-Report generiert',time:'vor 15 min',color:'var(--purple)'},
+    {ico:'⚡',text:'Proactive Agent: Morning Briefing erstellt',time:'vor 1h',color:'var(--yellow)'},
+    {ico:'🎯',text:'Habits Agent: Streak bei 12 Tagen!',time:'vor 2h',color:'var(--pink)'},
+  ];
+  feed.innerHTML = activities.map(a => `
+    <div class="card" style="margin-bottom:8px;padding:14px 18px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:18px">${a.ico}</span>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:500">${a.text}</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:2px">${a.time}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderAgents() {
+  const list = document.getElementById('agents-list');
+  list.innerHTML = AGENTS.map(a => `
+    <div class="agent-full" id="af-${a.id}" onclick="toggleAgent('${a.id}')">
+      <div class="agent-header">
+        <div class="ah-ico" style="background:${a.color.replace('var(','rgba(').replace(')','')}15)">${a.ico}</div>
+        <div class="ah-info">
+          <div class="ah-name" style="color:${a.color}">${a.name} Agent</div>
+          <div class="ah-role">${a.role} — ${a.skills.length} Skills</div>
+        </div>
+        <div class="ah-arrow">›</div>
+      </div>
+      <div class="agent-skills">
+        ${a.skills.map(s => `
+          <div class="skill-item">
+            <div class="si-check" style="background:${a.color.replace('var(','rgba(').replace(')','')}15;color:${a.color}">✓</div>
+            <div>
+              <div class="si-name">${s.name}</div>
+              <div class="si-desc">${s.desc}</div>
+              <span class="si-badge" style="background:${s.p==='MUST'?'rgba(16,185,129,.1)':'rgba(255,255,255,.05)'};color:${s.p==='MUST'?'var(--green)':'var(--dim)'}">${s.p}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderFlow() {
+  const el = document.getElementById('flow-steps');
+  el.innerHTML = FLOW_STEPS.map((s,i) => `
+    <div class="flow-step-v">
+      <div class="flow-line" style="background:linear-gradient(to bottom,${s.color},${FLOW_STEPS[i+1]?.color||'transparent'})"></div>
+      <div class="flow-dot flow-anim" style="background:${s.color.replace('var(','rgba(').replace(')','')}15">${s.ico}</div>
+      <div class="flow-content flow-anim">
+        <div class="fc-num">STEP ${s.num}</div>
+        <div class="fc-title">${s.title}</div>
+        <div class="fc-desc">${s.desc}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderTech() {
+  const list = document.getElementById('tech-list');
+  list.innerHTML = TECH_STACK.map(t => `
+    <div class="tech-card">
+      <div class="tc-ico">${t.ico}</div>
+      <div>
+        <div class="tc-name">${t.name}</div>
+        <div class="tc-desc">${t.desc}</div>
+        <span class="tc-badge">${t.badge}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ===== NAVIGATION =====
+function switchScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.querySelector(`.nav-btn[data-screen="${id}"]`).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function showAgent(id) {
+  switchScreen('agents');
+  setTimeout(() => {
+    document.querySelectorAll('.agent-full').forEach(a => a.classList.remove('open'));
+    const el = document.getElementById('af-'+id);
+    el.classList.add('open');
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+  }, 100);
+}
+
+function toggleAgent(id) {
+  document.getElementById('af-'+id).classList.toggle('open');
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchScreen(btn.dataset.screen));
+});
+
+// ===== CHAT =====
+const chatMessages = document.getElementById('chat-messages');
+const chatInput = document.getElementById('chat-input');
+
+function addMessage(html, type) {
+  const div = document.createElement('div');
+  div.className = 'msg msg-' + type;
+  div.innerHTML = html;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return div;
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'msg msg-ai msg-typing';
+  div.id = 'typing';
+  div.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function sendMessage(text) {
+  if (!text.trim()) return;
+  addMessage(text, 'user');
+  chatInput.value = '';
+
+  const agent = routeMessage(text);
+  const agentData = AGENTS.find(a => a.id === agent);
+  const responses = CHAT_RESPONSES[agent];
+  const resp = responses[Math.floor(Math.random() * responses.length)];
+
+  showTyping();
+
+  setTimeout(() => {
+    removeTyping();
+    let html = `<div class="agent-tag" style="background:${resp.tagBg};color:${resp.tagColor}">${resp.tag}</div>`;
+    html += `<div>${resp.text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>`;
+    html += `<div class="route-info">Routed: ${agentData.ico} ${agentData.name} Agent → Tier 1 (keyword match)</div>`;
+
+    if (resp.actions) {
+      html += '<div class="action-chips">';
+      resp.actions.forEach(a => { html += `<span class="action-chip">${a.label}</span>`; });
+      html += '</div>';
+    }
+
+    addMessage(html, 'ai');
+  }, 800 + Math.random() * 1200);
+}
+
+document.getElementById('chat-send').addEventListener('click', () => sendMessage(chatInput.value));
+chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(chatInput.value); });
+document.querySelectorAll('.quick-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    switchScreen('chat');
+    setTimeout(() => sendMessage(btn.dataset.q), 200);
+  });
+});
+
+// ===== LIVE CLOCK =====
+function updateClock() {
+  const now = new Date();
+  const t = now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const el = document.getElementById('live-time');
+  if (el) el.textContent = t;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ===== INIT =====
+renderDashboard();
+renderAgents();
+renderFlow();
+renderTech();
+
+// Add welcome message to chat
+addMessage(
+  `<div class="agent-tag" style="background:rgba(139,92,246,.12);color:var(--purple)">🧠 KASAI BRAIN</div>
+   <div>Hey! Ich bin <strong>KASAI Brain</strong>, dein AI Fitness-Coach. 🔥<br><br>
+   Ich habe <strong>6 Agents</strong> mit <strong>43 Skills</strong> bereit. Frag mich was du willst — Training, Ernährung, Laufen, Habits, Analysen oder lass dir einfach dein Tages-Briefing geben!<br><br>
+   Probier die Quick-Buttons oben oder schreib mir direkt.</div>`, 'ai');
+
+// PWA install
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
